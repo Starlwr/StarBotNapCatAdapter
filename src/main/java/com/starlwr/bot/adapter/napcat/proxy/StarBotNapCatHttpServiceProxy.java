@@ -1,0 +1,73 @@
+package com.starlwr.bot.adapter.napcat.proxy;
+
+import com.alibaba.fastjson2.JSONObject;
+import com.starlwr.bot.adapter.napcat.annotation.NapCatHttpApi;
+import com.starlwr.bot.adapter.napcat.config.StarBotNapCatAdapterProperties;
+import com.starlwr.bot.adapter.napcat.exception.NapCatApiException;
+import com.starlwr.bot.core.util.HttpUtil;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * StarBot NapCat HTTP 服务代理
+ */
+@Slf4j
+public class StarBotNapCatHttpServiceProxy implements InvocationHandler {
+    @Resource
+    private StarBotNapCatAdapterProperties properties;
+
+    @Resource
+    private HttpUtil http;
+
+    @Getter
+    private String apiBaseUrl;
+
+    private final Map<String, String> headers = new HashMap<>();
+
+    @PostConstruct
+    public void init() {
+        apiBaseUrl = "http://" + properties.getAddress() + ":" + properties.getPort();
+        headers.put("Authorization", "Bearer " + properties.getToken());
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) {
+        if (method.getDeclaringClass() == Object.class) {
+            switch (method.getName()) {
+                case "toString":
+                    return this.toString();
+                case "hashCode":
+                    return System.identityHashCode(proxy);
+                case "equals":
+                    return proxy == args[0];
+            }
+        }
+
+        if (method.isAnnotationPresent(NapCatHttpApi.class)) {
+            NapCatHttpApi api = method.getAnnotation(NapCatHttpApi.class);
+            if (api != null) {
+                JSONObject params = (JSONObject) args[0];
+
+                log.debug("StarBot -> NapCat: {} {}", api.url(), params.toJSONString());
+                String url = apiBaseUrl + api.url();
+                JSONObject result = http.postJson(url, headers, params);
+                log.debug("NapCat -> StarBot: {} {}", api.url(), result.toJSONString());
+
+                if (result.getInteger("retcode") != 0) {
+                    throw new NapCatApiException(api.url(), params, result.getInteger("retcode"), result.getString("message"));
+                }
+
+                return result.getJSONObject("data");
+            }
+        }
+
+        throw new UnsupportedOperationException("不支持的方法 " + method);
+    }
+}
