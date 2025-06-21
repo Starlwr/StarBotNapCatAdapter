@@ -29,4 +29,9 @@ public class StarBotNapCatAdapterProperties {
      * Token
      */
     private String token;
+
+    /**
+     * 请求信息 Debug 日志最大输出长度
+     */
+    private int debugLogMaxLength = 1000;
 }

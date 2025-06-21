@@ -5,6 +5,7 @@ import com.starlwr.bot.adapter.napcat.annotation.NapCatHttpApi;
 import com.starlwr.bot.adapter.napcat.config.StarBotNapCatAdapterProperties;
 import com.starlwr.bot.adapter.napcat.exception.NapCatApiException;
 import com.starlwr.bot.core.util.HttpUtil;
+import com.starlwr.bot.core.util.StringUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.Getter;
@@ -55,10 +56,10 @@ public class StarBotNapCatHttpServiceProxy implements InvocationHandler {
             if (api != null) {
                 JSONObject params = (JSONObject) args[0];
 
-                log.debug("StarBot -> NapCat: {} {}", api.url(), params.toJSONString());
+                log.debug("NapCatHttpApi <- : {} {}", api.url(), StringUtil.getOmitString(params.toJSONString(), properties.getDebugLogMaxLength()));
                 String url = apiBaseUrl + api.url();
                 JSONObject result = http.postJson(url, headers, params);
-                log.debug("NapCat -> StarBot: {} {}", api.url(), result.toJSONString());
+                log.debug("NapCatHttpApi -> : {} {}", api.url(), result.toJSONString());
 
                 if (result.getInteger("retcode") != 0) {
                     throw new NapCatApiException(api.url(), params, result.getInteger("retcode"), result.getString("message"));
