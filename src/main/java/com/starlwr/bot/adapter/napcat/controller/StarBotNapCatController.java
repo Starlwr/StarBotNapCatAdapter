@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
  * StarBot NapCat 控制器
@@ -40,8 +41,14 @@ public class StarBotNapCatController implements ApplicationListener<ApplicationR
     public void onApplicationEvent(@NonNull ApplicationReadyEvent event) {
         log.info("NapCat 连接地址: http://{}:{}", properties.getAddress(), properties.getPort());
         log.info("开始检测 NapCat 服务可用性");
-        JSONObject versionInfo = napcat.getVersionInfo(new JSONObject());
-        log.info("NapCat 连接正常, 版本 v{}", versionInfo.getString("app_version"));
+        try {
+            JSONObject versionInfo = napcat.getVersionInfo(new JSONObject());
+            log.info("NapCat 连接正常, 版本 v{}", versionInfo.getString("app_version"));
+        } catch (WebClientResponseException.Forbidden e) {
+            log.error("NapCat Token 配置不正确, 请检查", e);
+        } catch (Exception e) {
+            log.error("NapCat 服务不可用, 请检查配置和服务状态", e);
+        }
     }
 
     @PostMapping("/send")
