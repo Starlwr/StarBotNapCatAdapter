@@ -69,7 +69,7 @@ public class StarBotNapCatController implements ApplicationListener<ApplicationR
 
             return new JSONObject().fluentPut("code", ResultCode.SUCCESS.getCode()).fluentPut("message", ResultCode.SUCCESS.getMsg());
         } catch (NapCatApiException e) {
-            return new JSONObject().fluentPut("code", ResultCode.API_ERROR.getCode()).fluentPut("message", ResultCode.API_ERROR.getMsg() + ": " + e);
+            return new JSONObject().fluentPut("code", ResultCode.API_ERROR.getCode()).fluentPut("message", ResultCode.API_ERROR.getMsg() + ": " + e.getMsg());
         } catch (Exception e) {
             log.error("NapCat 发送消息异常", e);
             return new JSONObject().fluentPut("code", ResultCode.UNKNOWN.getCode()).fluentPut("message", "NapCat 发送消息异常, 请检查插件日志错误信息");
