@@ -73,9 +73,10 @@ public class NapCatMessageConverter {
                     }
 
                     content = content.substring(braceEnd + 1);
-                    braceStart = content.indexOf("{");
                 }
             }
+
+            braceStart = content.indexOf("{");
         }
 
         return elements;
