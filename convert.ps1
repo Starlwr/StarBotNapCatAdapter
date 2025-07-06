@@ -12,10 +12,6 @@ Get-Content $input | ForEach-Object {
         $version = $matches[3]
         $scope = $matches[4]
 
-        if ($groupId -eq "com.starlwr") {
-            return
-        }
-
         if ($scope -eq 'compile' -or $scope -eq 'runtime') {
             $deps += [PSCustomObject]@{
                 groupId = $groupId

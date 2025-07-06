@@ -11,10 +11,10 @@
     </parent>
 
     <groupId>com.starlwr</groupId>
-    <artifactId>starbot-napcat-adapter</artifactId>
+    <artifactId>starbot-onebot-adapter</artifactId>
     <version>1.0.0</version>
-    <name>StarBotNapCatAdapterPlugin</name>
-    <description>NapCat Adapter Plugin For StarBot</description>
+    <name>StarBotOneBotAdapterPlugin</name>
+    <description>OneBot Adapter Plugin For StarBot</description>
     <url>https://bot.starlwr.com</url>
 
     <licenses>
@@ -37,11 +37,18 @@
         <java.version>17</java.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>starbot-maven-repository</id>
+            <url>https://maven.starlwr.com/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>com.starlwr</groupId>
             <artifactId>starbot-core</artifactId>
-            <version>1.0.0</version>
+            <version>3.0.0</version>
         </dependency>
 
         <dependency>
@@ -81,7 +88,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>convert-dependencies-to-json</id>
@@ -131,6 +137,9 @@
                             <directory>src/main/resources</directory>
                             <excludes>
                                 <exclude>application.yml</exclude>
+                                <exclude>application.properties</exclude>
+                                <exclude>application-dev.yml</exclude>
+                                <exclude>application-dev.properties</exclude>
                             </excludes>
                         </resource>
                     </resources>

@@ -1,11 +1,11 @@
-package com.starlwr.bot.adapter.napcat.controller;
+package com.starlwr.bot.adapter.onebot.controller;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.starlwr.bot.adapter.napcat.config.StarBotNapCatAdapterProperties;
-import com.starlwr.bot.adapter.napcat.converter.NapCatMessageConverter;
-import com.starlwr.bot.adapter.napcat.enums.ResultCode;
-import com.starlwr.bot.adapter.napcat.exception.NapCatApiException;
-import com.starlwr.bot.adapter.napcat.service.StarBotNapCatHttpService;
+import com.starlwr.bot.adapter.onebot.config.StarBotOneBotAdapterPluginProperties;
+import com.starlwr.bot.adapter.onebot.converter.OneBotMessageConverter;
+import com.starlwr.bot.adapter.onebot.enums.ResultCode;
+import com.starlwr.bot.adapter.onebot.exception.OneBotApiException;
+import com.starlwr.bot.adapter.onebot.service.OneBotHttpService;
 import com.starlwr.bot.core.enums.PushTargetType;
 import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.plugin.StarBotComponent;
@@ -14,6 +14,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,33 +22,34 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
- * StarBot NapCat 控制器
+ * OneBot 控制器
  */
 @Slf4j
+@Order(-10000)
 @RestController
 @StarBotComponent
-@RequestMapping("/napcat")
-public class StarBotNapCatController implements ApplicationListener<ApplicationReadyEvent> {
+@RequestMapping("/onebot")
+public class OneBotController implements ApplicationListener<ApplicationReadyEvent> {
     @Resource
-    private StarBotNapCatAdapterProperties properties;
+    private StarBotOneBotAdapterPluginProperties properties;
 
     @Resource
-    private StarBotNapCatHttpService napcat;
+    private OneBotHttpService onebot;
 
     @Resource
-    private NapCatMessageConverter converter;
+    private OneBotMessageConverter converter;
 
     @Override
     public void onApplicationEvent(@NonNull ApplicationReadyEvent event) {
-        log.info("NapCat 连接地址: http://{}:{}", properties.getAddress(), properties.getPort());
-        log.info("开始检测 NapCat 服务可用性");
+        log.info("OneBot 连接地址: http://{}:{}", properties.getAddress(), properties.getPort());
+        log.info("开始检测 OneBot 服务可用性");
         try {
-            JSONObject versionInfo = napcat.getVersionInfo(new JSONObject());
-            log.info("NapCat 连接正常, 版本 v{}", versionInfo.getString("app_version"));
+            JSONObject versionInfo = onebot.getVersionInfo(new JSONObject());
+            log.info("OneBot 连接正常, 版本 v{}", versionInfo.getString("app_version"));
         } catch (WebClientResponseException.Forbidden e) {
-            log.error("NapCat Token 配置不正确, 请检查", e);
+            log.error("OneBot Token 配置不正确, 请检查", e);
         } catch (Exception e) {
-            log.error("NapCat 服务不可用, 请检查配置和服务状态", e);
+            log.error("OneBot 服务不可用, 请检查配置和服务状态", e);
         }
     }
 
@@ -59,20 +61,20 @@ public class StarBotNapCatController implements ApplicationListener<ApplicationR
 
             if (message.getType() == PushTargetType.FRIEND) {
                 params.put("user_id", String.valueOf(message.getNum()));
-                napcat.sendPrivateMsg(params);
+                onebot.sendPrivateMsg(params);
             } else if (message.getType() == PushTargetType.GROUP) {
                 params.put("group_id", String.valueOf(message.getNum()));
-                napcat.sendGroupMsg(params);
+                onebot.sendGroupMsg(params);
             } else {
                 return new JSONObject().fluentPut("code", ResultCode.UNKNOWN_TARGET_TYPE.getCode()).fluentPut("message", ResultCode.UNKNOWN_TARGET_TYPE.getMsg());
             }
 
             return new JSONObject().fluentPut("code", ResultCode.SUCCESS.getCode()).fluentPut("message", ResultCode.SUCCESS.getMsg());
-        } catch (NapCatApiException e) {
+        } catch (OneBotApiException e) {
             return new JSONObject().fluentPut("code", ResultCode.API_ERROR.getCode()).fluentPut("message", ResultCode.API_ERROR.getMsg() + ": " + e.getMsg());
         } catch (Exception e) {
-            log.error("NapCat 发送消息异常", e);
-            return new JSONObject().fluentPut("code", ResultCode.UNKNOWN.getCode()).fluentPut("message", "NapCat 发送消息异常, 请检查插件日志错误信息");
+            log.error("OneBot 发送消息异常", e);
+            return new JSONObject().fluentPut("code", ResultCode.UNKNOWN.getCode()).fluentPut("message", "OneBot 发送消息异常, 请检查插件日志错误信息");
         }
     }
 }

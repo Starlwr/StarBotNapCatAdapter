@@ -1,9 +1,9 @@
-package com.starlwr.bot.adapter.napcat.proxy;
+package com.starlwr.bot.adapter.onebot.proxy;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.starlwr.bot.adapter.napcat.annotation.NapCatHttpApi;
-import com.starlwr.bot.adapter.napcat.config.StarBotNapCatAdapterProperties;
-import com.starlwr.bot.adapter.napcat.exception.NapCatApiException;
+import com.starlwr.bot.adapter.onebot.annotation.OneBotHttpApi;
+import com.starlwr.bot.adapter.onebot.config.StarBotOneBotAdapterPluginProperties;
+import com.starlwr.bot.adapter.onebot.exception.OneBotApiException;
 import com.starlwr.bot.core.util.HttpUtil;
 import com.starlwr.bot.core.util.StringUtil;
 import jakarta.annotation.PostConstruct;
@@ -17,12 +17,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * StarBot NapCat HTTP 服务代理
+ * StarBot OneBot HTTP 服务代理
  */
 @Slf4j
-public class StarBotNapCatHttpServiceProxy implements InvocationHandler {
+public class OneBotHttpServiceProxy implements InvocationHandler {
     @Resource
-    private StarBotNapCatAdapterProperties properties;
+    private StarBotOneBotAdapterPluginProperties properties;
 
     @Resource
     private HttpUtil http;
@@ -51,18 +51,18 @@ public class StarBotNapCatHttpServiceProxy implements InvocationHandler {
             }
         }
 
-        if (method.isAnnotationPresent(NapCatHttpApi.class)) {
-            NapCatHttpApi api = method.getAnnotation(NapCatHttpApi.class);
+        if (method.isAnnotationPresent(OneBotHttpApi.class)) {
+            OneBotHttpApi api = method.getAnnotation(OneBotHttpApi.class);
             if (api != null) {
                 JSONObject params = (JSONObject) args[0];
 
-                log.debug("NapCatHttpApi <- : {} {}", api.url(), StringUtil.getOmitString(params.toJSONString(), properties.getDebugLogMaxLength()));
+                log.debug("OneBotHttpApi <- : {} {}", api.url(), StringUtil.getOmitString(params.toJSONString(), properties.getDebugLogMaxLength()));
                 String url = apiBaseUrl + api.url();
                 JSONObject result = http.postJson(url, headers, params);
-                log.debug("NapCatHttpApi -> : {} {}", api.url(), result.toJSONString());
+                log.debug("OneBotHttpApi -> : {} {}", api.url(), result.toJSONString());
 
                 if (result.getInteger("retcode") != 0) {
-                    throw new NapCatApiException(api.url(), params, result.getInteger("retcode"), result.getString("message"));
+                    throw new OneBotApiException(api.url(), params, result.getInteger("retcode"), result.getString("message"));
                 }
 
                 return result.getJSONObject("data");

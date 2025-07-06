@@ -1,4 +1,4 @@
-package com.starlwr.bot.adapter.napcat.converter;
+package com.starlwr.bot.adapter.onebot.converter;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * NapCat 消息转换器
+ * OneBot 消息转换器
  * <ul>
  *     <li>{next}: 消息分条，已由 StarBot 内部处理，无需手动处理</li>
  *     <li>{face=1}: 表情</li>
@@ -21,9 +21,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @StarBotComponent
-public class NapCatMessageConverter {
+public class OneBotMessageConverter {
     /**
-     * 将可包含占位符的原始消息转换为 NapCat 可识别的格式
+     * 将可包含占位符的原始消息转换为 OneBot 可识别的格式
      * @param content 可包含占位符的消息内容
      * @return 转换后的 JSON 数组
      */

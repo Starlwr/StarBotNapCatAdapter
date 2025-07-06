@@ -1,4 +1,4 @@
-package com.starlwr.bot.adapter.napcat.config;
+package com.starlwr.bot.adapter.onebot.config;
 
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import lombok.Getter;
@@ -7,14 +7,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * StarBotNapCatAdapter 配置类
+ * StarBotOneBotAdapterPlugin 配置类
  */
 @Getter
 @Setter
 @Configuration
 @StarBotComponent
-@ConfigurationProperties(prefix = "starbot.adapter.napcat")
-public class StarBotNapCatAdapterProperties {
+@ConfigurationProperties(prefix = "starbot.adapter.onebot")
+public class StarBotOneBotAdapterPluginProperties {
     /**
      * 接口地址
      */

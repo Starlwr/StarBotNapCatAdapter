@@ -1,4 +1,4 @@
-package com.starlwr.bot.adapter.napcat.annotation;
+package com.starlwr.bot.adapter.onebot.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,11 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * NapCat HTTP 接口注解
+ * OneBot HTTP 接口注解
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface NapCatHttpApi {
+public @interface OneBotHttpApi {
     /**
      * 接口名称
      */

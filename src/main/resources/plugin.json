@@ -1,6 +1,6 @@
 {
-  "name": "StarBotNapCatAdapterPlugin",
+  "name": "StarBotOneBotAdapterPlugin",
   "author": "StarBotOfficial",
   "version": "1.0.0",
-  "description": "NapCat Adapter Plugin For StarBot"
+  "description": "OneBot Adapter Plugin For StarBot"
 }
