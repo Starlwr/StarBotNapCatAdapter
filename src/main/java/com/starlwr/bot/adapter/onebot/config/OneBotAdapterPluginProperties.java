@@ -18,14 +18,46 @@ import java.util.List;
 @Configuration
 @StarBotComponent
 @ConfigurationProperties(prefix = "starbot.adapter.onebot")
-public class StarBotOneBotAdapterPluginProperties {
+public class OneBotAdapterPluginProperties {
     /**
      * OneBot 推送接口统一前缀
      */
+    @Getter
     private String baseUrl = "/onebot";
 
     /**
      * OneBot 推送平台列表
      */
+    @Getter
     private List<OneBotSender> senders = new ArrayList<>();
+
+    @Getter
+    private WebsocketThread websocketThread = new WebsocketThread();
+
+    /**
+     * 线程相关
+     */
+    @Getter
+    @Setter
+    public static class WebsocketThread {
+        /**
+         * 线程池核心线程数
+         */
+        private int corePoolSize = 10;
+
+        /**
+         * 线程池最大线程数
+         */
+        private int maxPoolSize = 100;
+
+        /**
+         * 线程池任务队列容量
+         */
+        private int queueCapacity = 0;
+
+        /**
+         * 非核心线程存活时间，单位：秒
+         */
+        private int keepAliveSeconds = 300;
+    }
 }

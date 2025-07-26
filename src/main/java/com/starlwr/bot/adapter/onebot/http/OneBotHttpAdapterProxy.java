@@ -2,7 +2,6 @@ package com.starlwr.bot.adapter.onebot.http;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.starlwr.bot.adapter.onebot.annotation.OneBotApi;
-import com.starlwr.bot.adapter.onebot.config.StarBotOneBotAdapterPluginProperties;
 import com.starlwr.bot.adapter.onebot.exception.OneBotApiException;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.util.HttpUtil;
@@ -44,7 +43,7 @@ public class OneBotHttpAdapterProxy implements InvocationHandler {
 
                 Map<String, String> headers = new HashMap<>();
                 headers.put("Authorization", "Bearer " + sender.getOneBotToken());
-                String apiBaseUrl = "http://" + sender.getOneBotAddress() + ":" + sender.getOneBotPort();
+                String apiBaseUrl = "http://" + sender.getOneBotAddress() + ":" + sender.getOneBotHttpPort();
 
                 log.debug("OneBotApi <- : {} {}", api.url(), StringUtil.getOmitString(params.toJSONString(), sender.getDebugLogMaxLength()));
                 String url = apiBaseUrl + api.url();

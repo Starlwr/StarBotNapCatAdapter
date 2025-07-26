@@ -41,7 +41,7 @@ public class OneBotHttpService implements ApplicationListener<ApplicationReadyEv
             OneBotSender sender = senders.get(senderName);
 
             log.info("开始检测 {} 的 OneBot HTTP 服务可用性", senderName);
-            log.info("OneBot HTTP 连接地址: http://{}:{}", sender.getOneBotAddress(), sender.getOneBotPort());
+            log.info("OneBot HTTP 连接地址: http://{}:{}", sender.getOneBotAddress(), sender.getOneBotHttpPort());
             try {
                 JSONObject versionInfo = http.getVersionInfo(sender, new JSONObject());
                 log.info("OneBot HTTP 连接正常, 版本 v{}", versionInfo.getString("app_version"));
@@ -57,7 +57,7 @@ public class OneBotHttpService implements ApplicationListener<ApplicationReadyEv
      * 注册 OneBot HTTP 推送平台
      * @param sender OneBot HTTP 推送平台
      */
-    public void registerSender(OneBotSender sender) {
+    public void register(OneBotSender sender) {
         senders.put(sender.getName(), sender);
     }
 

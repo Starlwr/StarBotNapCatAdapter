@@ -20,14 +20,24 @@ public class OneBotSender {
     private String api;
 
     /**
+     * 是否启用 Websocket
+     */
+    private boolean websocket;
+
+    /**
      * OneBot 地址
      */
     private String oneBotAddress;
 
     /**
-     * OneBot 端口号
+     * OneBot HTTP 端口号
      */
-    private int oneBotPort;
+    private int oneBotHttpPort;
+
+    /**
+     * OneBot Websocket 端口号
+     */
+    private int oneBotWebsocketPort;
 
     /**
      * OneBot Token

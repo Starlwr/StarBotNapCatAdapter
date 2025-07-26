@@ -1,9 +1,10 @@
 package com.starlwr.bot.adapter.onebot.controller;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.starlwr.bot.adapter.onebot.config.StarBotOneBotAdapterPluginProperties;
+import com.starlwr.bot.adapter.onebot.config.OneBotAdapterPluginProperties;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.adapter.onebot.service.OneBotHttpService;
+import com.starlwr.bot.adapter.onebot.service.OneBotWebsocketService;
 import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.model.Sender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
@@ -34,13 +35,16 @@ public class OneBotController {
     private RequestMappingHandlerMapping mapping;
 
     @Resource
-    private StarBotOneBotAdapterPluginProperties properties;
+    private OneBotAdapterPluginProperties properties;
 
     @Resource
     private StarBotSenderService senderService;
 
     @Resource
     private OneBotHttpService httpService;
+
+    @Resource
+    private OneBotWebsocketService websocketService;
 
     @PostConstruct
     public void init() throws NoSuchMethodException {
@@ -59,7 +63,10 @@ public class OneBotController {
 
             senderService.addSender(new Sender(sender.getName(), "http://localhost:" + webContext.getWebServer().getPort() + properties.getBaseUrl() + sender.getApi(), sender.getDelay()));
 
-            httpService.registerSender(sender);
+            httpService.register(sender);
+            if (sender.isWebsocket()) {
+                websocketService.register(sender);
+            }
         }
     }
 
