@@ -1,14 +1,13 @@
-package com.starlwr.bot.adapter.onebot.proxy;
+package com.starlwr.bot.adapter.onebot.http;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.starlwr.bot.adapter.onebot.annotation.OneBotHttpApi;
+import com.starlwr.bot.adapter.onebot.annotation.OneBotApi;
 import com.starlwr.bot.adapter.onebot.config.StarBotOneBotAdapterPluginProperties;
 import com.starlwr.bot.adapter.onebot.exception.OneBotApiException;
+import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.util.HttpUtil;
 import com.starlwr.bot.core.util.StringUtil;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationHandler;
@@ -20,23 +19,9 @@ import java.util.Map;
  * StarBot OneBot HTTP 服务代理
  */
 @Slf4j
-public class OneBotHttpServiceProxy implements InvocationHandler {
-    @Resource
-    private StarBotOneBotAdapterPluginProperties properties;
-
+public class OneBotHttpAdapterProxy implements InvocationHandler {
     @Resource
     private HttpUtil http;
-
-    @Getter
-    private String apiBaseUrl;
-
-    private final Map<String, String> headers = new HashMap<>();
-
-    @PostConstruct
-    public void init() {
-        apiBaseUrl = "http://" + properties.getAddress() + ":" + properties.getPort();
-        headers.put("Authorization", "Bearer " + properties.getToken());
-    }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) {
@@ -51,15 +36,20 @@ public class OneBotHttpServiceProxy implements InvocationHandler {
             }
         }
 
-        if (method.isAnnotationPresent(OneBotHttpApi.class)) {
-            OneBotHttpApi api = method.getAnnotation(OneBotHttpApi.class);
+        if (method.isAnnotationPresent(OneBotApi.class)) {
+            OneBotApi api = method.getAnnotation(OneBotApi.class);
             if (api != null) {
-                JSONObject params = (JSONObject) args[0];
+                OneBotSender sender = (OneBotSender) args[0];
+                JSONObject params = (JSONObject) args[1];
 
-                log.debug("OneBotHttpApi <- : {} {}", api.url(), StringUtil.getOmitString(params.toJSONString(), properties.getDebugLogMaxLength()));
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "Bearer " + sender.getOneBotToken());
+                String apiBaseUrl = "http://" + sender.getOneBotAddress() + ":" + sender.getOneBotPort();
+
+                log.debug("OneBotApi <- : {} {}", api.url(), StringUtil.getOmitString(params.toJSONString(), sender.getDebugLogMaxLength()));
                 String url = apiBaseUrl + api.url();
                 JSONObject result = http.postJson(url, headers, params);
-                log.debug("OneBotHttpApi -> : {} {}", api.url(), result.toJSONString());
+                log.debug("OneBotApi -> : {} {}", api.url(), result.toJSONString());
 
                 if (result.getInteger("retcode") != 0) {
                     throw new OneBotApiException(api.url(), params, result.getInteger("retcode"), result.getString("message"));

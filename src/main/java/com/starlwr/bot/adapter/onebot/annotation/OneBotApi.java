@@ -6,11 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * OneBot HTTP 接口注解
+ * OneBot 接口注解
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface OneBotHttpApi {
+public @interface OneBotApi {
     /**
      * 接口名称
      */

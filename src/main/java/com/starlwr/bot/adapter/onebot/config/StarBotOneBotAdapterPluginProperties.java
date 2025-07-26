@@ -1,10 +1,14 @@
 package com.starlwr.bot.adapter.onebot.config;
 
+import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * StarBotOneBotAdapterPlugin 配置类
@@ -16,22 +20,12 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "starbot.adapter.onebot")
 public class StarBotOneBotAdapterPluginProperties {
     /**
-     * 接口地址
+     * OneBot 推送接口统一前缀
      */
-    private String address = "localhost";
+    private String baseUrl = "/onebot";
 
     /**
-     * 端口号
+     * OneBot 推送平台列表
      */
-    private int port = 3000;
-
-    /**
-     * Token
-     */
-    private String token;
-
-    /**
-     * 请求信息 Debug 日志最大输出长度
-     */
-    private int debugLogMaxLength = 1000;
+    private List<OneBotSender> senders = new ArrayList<>();
 }
