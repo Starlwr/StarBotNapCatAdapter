@@ -1,5 +1,6 @@
 package com.starlwr.bot.adapter.onebot.service;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.starlwr.bot.adapter.onebot.converter.OneBotMessageConverter;
 import com.starlwr.bot.adapter.onebot.enums.ResultCode;
@@ -71,7 +72,13 @@ public class OneBotHttpService implements ApplicationListener<ApplicationReadyEv
 
         try {
             JSONObject params = new JSONObject();
-            params.put("message", converter.convert(message.getContent()));
+
+            JSONArray elements = converter.convert(message.getContent());
+            if (elements.isEmpty()) {
+                return new JSONObject().fluentPut("code", ResultCode.EMPTY_MESSAGE.getCode()).fluentPut("message", ResultCode.EMPTY_MESSAGE.getMsg());
+            }
+
+            params.put("message", elements);
 
             if (message.getType() == PushTargetType.FRIEND) {
                 params.put("user_id", String.valueOf(message.getNum()));
