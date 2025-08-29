@@ -5,6 +5,8 @@ import com.alibaba.fastjson2.JSONObject;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import jakarta.annotation.Resource;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -68,7 +70,9 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
                     WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
                     headers.add("Authorization", "Bearer " + sender.getOneBotToken());
 
-                    StandardWebSocketClient webSocketClient = new StandardWebSocketClient();
+                    WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+                    container.setDefaultMaxTextMessageBufferSize(8 * 1024 * 1024);
+                    StandardWebSocketClient webSocketClient = new StandardWebSocketClient(container);
                     OneBotWebSocketHandler handler = new OneBotWebSocketHandler(this, sender);
                     CompletableFuture<WebSocketSession> sessionFuture = webSocketClient.execute(handler, headers, URI.create(url));
 
@@ -106,6 +110,8 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
 
         private final ThreadPoolTaskExecutor executor;
 
+        private final StringBuilder messageBuffer = new StringBuilder();
+
         private OneBotWebSocketHandler(OneBotWebsocketService service, OneBotSender sender) {
             this.service = service;
             this.sender = sender;
@@ -128,29 +134,42 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
          */
         @Override
         public void handleMessage(@NonNull WebSocketSession session, @NonNull WebSocketMessage<?> webSocketRawMessage) {
-            executor.submit(() -> {
-                try {
-                    if (webSocketRawMessage instanceof TextMessage webSocketMessage) {
-                        JSONObject rawMessage = JSON.parseObject(webSocketMessage.getPayload());
-                        if ("status".equalsIgnoreCase(rawMessage.getString("raw_message"))) {
-                            JSONObject operation = new JSONObject();
-                            operation.put("reply", "Running on StarBot v3.0.0");
+            try {
+                if (webSocketRawMessage instanceof TextMessage webSocketMessage) {
+                    messageBuffer.append(webSocketMessage.getPayload());
 
-                            JSONObject params = new JSONObject();
-                            params.put("context", rawMessage);
-                            params.put("operation", operation);
+                    if (webSocketMessage.isLast()) {
+                        String fullMessage = messageBuffer.toString();
+                        messageBuffer.setLength(0);
 
-                            JSONObject response = new JSONObject();
-                            response.put("action", ".handle_quick_operation");
-                            response.put("params", params);
+                        executor.submit(() -> {
+                            try {
+                                JSONObject rawMessage = JSON.parseObject(fullMessage);
+                                if ("status".equalsIgnoreCase(rawMessage.getString("raw_message"))) {
+                                    JSONObject operation = new JSONObject();
+                                    operation.put("reply", "Running on StarBot v3.0.0");
 
-                            session.sendMessage(new TextMessage(response.toJSONString()));
-                        }
+                                    JSONObject params = new JSONObject();
+                                    params.put("context", rawMessage);
+                                    params.put("operation", operation);
+
+                                    JSONObject response = new JSONObject();
+                                    response.put("action", ".handle_quick_operation");
+                                    response.put("params", params);
+
+                                    session.sendMessage(new TextMessage(response.toJSONString()));
+                                }
+                            } catch (Exception e) {
+                                log.error("处理 {} 的 OneBot Websocket 消息时发生异常", sender.getName(), e);
+                                messageBuffer.setLength(0);
+                            }
+                        });
                     }
-                } catch (Exception e) {
-                    log.error("处理 {} 的 OneBot Websocket 消息时发生异常", sender.getName(), e);
                 }
-            });
+            } catch (Exception e) {
+                log.error("处理 {} 的 OneBot Websocket 分片消息发生异常", sender.getName(), e);
+                messageBuffer.setLength(0);
+            }
         }
 
         /**
@@ -180,7 +199,7 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
         @Override
         public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus closeStatus) {
             executor.submit(() -> {
-                log.warn("与 {} 的 Websocket 连接断开, 将在 1 秒后重新连接", sender.getName());
+                log.warn("与 {} 的 Websocket 连接断开 ({}: {}), 将在 1 秒后重新连接", sender.getName(), closeStatus.getCode(), closeStatus.getReason());
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -197,7 +216,7 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
          */
         @Override
         public boolean supportsPartialMessages() {
-            return false;
+            return true;
         }
     }
 }
