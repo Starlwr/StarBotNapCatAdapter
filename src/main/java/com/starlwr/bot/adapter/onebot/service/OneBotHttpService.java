@@ -54,6 +54,11 @@ public class OneBotHttpService implements ApplicationListener<ApplicationReadyEv
         }
     }
 
+    @Override
+    public boolean supportsAsyncExecution() {
+        return false;
+    }
+
     /**
      * 注册 OneBot HTTP 推送平台
      * @param sender OneBot HTTP 推送平台
