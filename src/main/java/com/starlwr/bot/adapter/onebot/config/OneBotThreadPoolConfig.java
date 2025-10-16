@@ -36,6 +36,9 @@ public class OneBotThreadPoolConfig {
     private static class OneBotWithLogCallerRunsPolicy implements RejectedExecutionHandler {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+            if (executor.isShutdown()) {
+                return;
+            }
             log.warn("OneBot 线程池资源已耗尽, 请考虑增加线程池大小!");
             r.run();
         }
