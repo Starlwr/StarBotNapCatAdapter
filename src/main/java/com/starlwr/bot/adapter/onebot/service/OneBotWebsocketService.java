@@ -21,6 +21,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -69,6 +70,7 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
                 log.info("准备连接 {} 的 OneBot Websocket 服务", sender.getName());
                 log.info("OneBot Websocket 连接地址: ws://{}:{}/", sender.getOneBotAddress(), sender.getOneBotWebsocketPort());
 
+                CompletableFuture<WebSocketSession> sessionFuture = null;
                 try {
                     String url = String.format("ws://%s:%d", sender.getOneBotAddress(), sender.getOneBotWebsocketPort());
 
@@ -79,23 +81,27 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
                     container.setDefaultMaxTextMessageBufferSize(8 * 1024 * 1024);
                     StandardWebSocketClient webSocketClient = new StandardWebSocketClient(container);
                     OneBotWebSocketHandler handler = new OneBotWebSocketHandler(this, sender);
-                    CompletableFuture<WebSocketSession> sessionFuture = webSocketClient.execute(handler, headers, URI.create(url));
+                    sessionFuture = webSocketClient.execute(handler, headers, URI.create(url));
 
-                    sessionFuture.get(3, TimeUnit.SECONDS);
-
-                    break;
+                    if (handler.awaitConnection()) {
+                        sessionFuture.get();
+                        break;
+                    } else {
+                        throw new TimeoutException();
+                    }
                 } catch (Exception e) {
                     retryCount++;
                     retryInterval = Math.min(retryInterval * 2, 60);
 
                     if (e instanceof TimeoutException) {
                         log.warn("连接 {} 的 OneBot Websocket 服务超时, 将在 {} 秒后进行第 {} 次重试", sender.getName(), retryInterval, retryCount);
+                        sessionFuture.cancel(true);
                     } else {
                         log.error("{} 的 OneBot Websocket 服务不可用, 请检查配置和服务状态, 将在 {} 秒后进行第 {} 次重试", sender.getName(), retryInterval, retryCount, e);
                     }
 
                     try {
-                        Thread.sleep(retryInterval * 1000);
+                        Thread.sleep(retryInterval * 1000L);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                         log.error("连接 {} 的 OneBot Websocket 中断", sender.getName(), ex);
@@ -115,7 +121,11 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
 
         private final ThreadPoolTaskExecutor executor;
 
+        private final CountDownLatch latch = new CountDownLatch(1);
+
         private final StringBuilder messageBuffer = new StringBuilder();
+
+        private boolean connectTimeout = false;
 
         private OneBotWebSocketHandler(OneBotWebsocketService service, OneBotSender sender) {
             this.service = service;
@@ -124,11 +134,43 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
         }
 
         /**
+         * 等待 WebSocket 连接成功
+         * @return 连接是否成功
+         */
+        public boolean awaitConnection() {
+            synchronized (this) {
+                try {
+                    if (latch.await(3, TimeUnit.SECONDS)) {
+                        return true;
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+                connectTimeout = true;
+                return false;
+            }
+        }
+
+        /**
          * 连接建立
          * @param session WebSocket 会话
          */
         @Override
         public void afterConnectionEstablished(@NonNull WebSocketSession session) {
+            latch.countDown();
+
+            synchronized (this) {
+                if (connectTimeout) {
+                    try {
+                        session.close();
+                    } catch (Exception e) {
+                        log.error("断开 {} 的超时 OneBot Websocket 服务异常", sender.getName(), e);
+                    }
+                    return;
+                }
+            }
+
             executor.submit(() -> log.info("已连接到 {} 的 OneBot Websocket 服务", sender.getName()));
         }
 
@@ -203,6 +245,10 @@ public class OneBotWebsocketService implements ApplicationListener<ApplicationRe
          */
         @Override
         public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus closeStatus) {
+            if (connectTimeout) {
+                return;
+            }
+
             executor.submit(() -> {
                 log.warn("与 {} 的 Websocket 连接断开 ({}: {}), 将在 1 秒后重新连接", sender.getName(), closeStatus.getCode(), closeStatus.getReason());
                 try {
