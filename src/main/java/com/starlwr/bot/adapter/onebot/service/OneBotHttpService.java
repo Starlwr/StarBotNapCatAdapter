@@ -11,10 +11,9 @@ import com.starlwr.bot.core.enums.PushTargetType;
 import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import jakarta.annotation.Resource;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -25,9 +24,8 @@ import java.util.Map;
  * OneBot HTTP 服务
  */
 @Slf4j
-@Order(-10000)
 @StarBotComponent
-public class OneBotHttpService implements ApplicationListener<ApplicationReadyEvent> {
+public class OneBotHttpService {
     @Resource
     private OneBotHttpAdapter http;
 
@@ -36,8 +34,12 @@ public class OneBotHttpService implements ApplicationListener<ApplicationReadyEv
 
     private final Map<String, OneBotSender> senders = new HashMap<>();
 
-    @Override
-    public void onApplicationEvent(@NonNull ApplicationReadyEvent event) {
+    /**
+     * OneBot HTTP 可用性检查
+     */
+    @Order(-10000)
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReadyEvent() {
         for (String senderName : senders.keySet()) {
             OneBotSender sender = senders.get(senderName);
 
@@ -52,11 +54,6 @@ public class OneBotHttpService implements ApplicationListener<ApplicationReadyEv
                 log.error("OneBot HTTP 服务不可用, 请检查配置和服务状态", e);
             }
         }
-    }
-
-    @Override
-    public boolean supportsAsyncExecution() {
-        return false;
     }
 
     /**

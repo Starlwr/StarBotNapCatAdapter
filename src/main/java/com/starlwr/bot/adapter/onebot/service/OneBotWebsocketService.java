@@ -11,7 +11,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.socket.*;
@@ -29,25 +29,23 @@ import java.util.concurrent.TimeoutException;
  * OneBot Websocket 服务
  */
 @Slf4j
-@Order(-10000)
 @StarBotComponent
-public class OneBotWebsocketService implements ApplicationListener<ApplicationReadyEvent> {
+public class OneBotWebsocketService {
     @Resource
     @Qualifier("oneBotThreadPool")
     private ThreadPoolTaskExecutor executor;
 
     private final Map<String, OneBotSender> senders = new HashMap<>();
 
-    @Override
-    public void onApplicationEvent(@NonNull ApplicationReadyEvent event) {
+    /**
+     * 连接 OneBot Websocket
+     */
+    @Order(-10000)
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReadyEvent() {
         for (OneBotSender sender : senders.values()) {
             connect(sender);
         }
-    }
-
-    @Override
-    public boolean supportsAsyncExecution() {
-        return false;
     }
 
     /**

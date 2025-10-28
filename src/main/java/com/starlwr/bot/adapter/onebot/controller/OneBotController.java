@@ -10,11 +10,10 @@ import com.starlwr.bot.core.model.Sender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import com.starlwr.bot.core.service.StarBotSenderService;
 import jakarta.annotation.Resource;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.web.context.WebServerApplicationContext;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -28,10 +27,9 @@ import java.lang.reflect.Method;
  * OneBot 控制器
  */
 @Slf4j
-@Order(-20000)
 @RestController
 @StarBotComponent
-public class OneBotController implements ApplicationListener<ApplicationReadyEvent> {
+public class OneBotController {
     @Resource
     private WebServerApplicationContext webContext;
 
@@ -50,8 +48,12 @@ public class OneBotController implements ApplicationListener<ApplicationReadyEve
     @Resource
     private OneBotWebsocketService websocketService;
 
-    @Override
-    public void onApplicationEvent(@NonNull ApplicationReadyEvent event) {
+    /**
+     * 注册 OneBot 推送平台接口
+     */
+    @Order(-20000)
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReadyEvent() {
         Method method;
         try {
             method = getClass().getMethod("send", Message.class);
@@ -86,10 +88,5 @@ public class OneBotController implements ApplicationListener<ApplicationReadyEve
      */
     public JSONObject send(@RequestBody Message message) {
         return httpService.send(message);
-    }
-
-    @Override
-    public boolean supportsAsyncExecution() {
-        return false;
     }
 }
