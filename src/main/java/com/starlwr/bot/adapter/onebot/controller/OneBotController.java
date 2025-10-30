@@ -4,13 +4,12 @@ import com.alibaba.fastjson2.JSONObject;
 import com.starlwr.bot.adapter.onebot.config.OneBotAdapterPluginProperties;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.adapter.onebot.service.OneBotHttpService;
-import com.starlwr.bot.adapter.onebot.service.OneBotWebsocketService;
 import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.model.Sender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import com.starlwr.bot.core.service.StarBotSenderService;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.event.EventListener;
@@ -30,23 +29,24 @@ import java.lang.reflect.Method;
 @RestController
 @StarBotComponent
 public class OneBotController {
-    @Resource
-    private WebServerApplicationContext webContext;
+    private final WebServerApplicationContext webContext;
 
-    @Resource
-    private RequestMappingHandlerMapping mapping;
+    private final RequestMappingHandlerMapping mapping;
 
-    @Resource
-    private OneBotAdapterPluginProperties properties;
+    private final OneBotAdapterPluginProperties properties;
 
-    @Resource
-    private StarBotSenderService senderService;
+    private final StarBotSenderService senderService;
 
-    @Resource
-    private OneBotHttpService httpService;
+    private final OneBotHttpService httpService;
 
-    @Resource
-    private OneBotWebsocketService websocketService;
+    @Autowired
+    public OneBotController(WebServerApplicationContext webContext, RequestMappingHandlerMapping mapping, OneBotAdapterPluginProperties properties, StarBotSenderService senderService, OneBotHttpService httpService) {
+        this.webContext = webContext;
+        this.mapping = mapping;
+        this.properties = properties;
+        this.senderService = senderService;
+        this.httpService = httpService;
+    }
 
     /**
      * 注册 OneBot 推送平台接口
@@ -75,9 +75,6 @@ public class OneBotController {
             senderService.addSender(new Sender(sender.getName(), "http://localhost:" + webContext.getWebServer().getPort() + properties.getBaseUrl() + sender.getApi(), sender.getDelay()));
 
             httpService.register(sender);
-            if (sender.isWebsocket()) {
-                websocketService.register(sender);
-            }
         }
     }
 

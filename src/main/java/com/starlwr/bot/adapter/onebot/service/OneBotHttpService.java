@@ -10,8 +10,8 @@ import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.enums.PushTargetType;
 import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.plugin.StarBotComponent;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -26,13 +26,17 @@ import java.util.Map;
 @Slf4j
 @StarBotComponent
 public class OneBotHttpService {
-    @Resource
-    private OneBotHttpAdapter http;
+    private final OneBotHttpAdapter http;
 
-    @Resource
-    private OneBotMessageConverter converter;
+    private final OneBotMessageConverter converter;
 
     private final Map<String, OneBotSender> senders = new HashMap<>();
+
+    @Autowired
+    public OneBotHttpService(OneBotHttpAdapter http, OneBotMessageConverter converter) {
+        this.http = http;
+        this.converter = converter;
+    }
 
     /**
      * OneBot HTTP 可用性检查

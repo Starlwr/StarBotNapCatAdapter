@@ -6,7 +6,6 @@ import com.starlwr.bot.adapter.onebot.exception.OneBotApiException;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.util.HttpUtil;
 import com.starlwr.bot.core.util.StringUtil;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationHandler;
@@ -19,8 +18,11 @@ import java.util.Map;
  */
 @Slf4j
 public class OneBotHttpAdapterProxy implements InvocationHandler {
-    @Resource
-    private HttpUtil http;
+    private final HttpUtil http;
+
+    public OneBotHttpAdapterProxy(HttpUtil http) {
+        this.http = http;
+    }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) {

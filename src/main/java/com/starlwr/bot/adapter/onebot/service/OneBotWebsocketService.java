@@ -2,13 +2,14 @@ package com.starlwr.bot.adapter.onebot.service;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.starlwr.bot.adapter.onebot.config.OneBotAdapterPluginProperties;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
-import jakarta.annotation.Resource;
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.WebSocketContainer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -18,8 +19,6 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -31,11 +30,15 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 @StarBotComponent
 public class OneBotWebsocketService {
-    @Resource
-    @Qualifier("oneBotThreadPool")
-    private ThreadPoolTaskExecutor executor;
+    private final ThreadPoolTaskExecutor executor;
 
-    private final Map<String, OneBotSender> senders = new HashMap<>();
+    private final OneBotAdapterPluginProperties properties;
+
+    @Autowired
+    public OneBotWebsocketService(@Qualifier("oneBotThreadPool") ThreadPoolTaskExecutor executor, OneBotAdapterPluginProperties properties) {
+        this.executor = executor;
+        this.properties = properties;
+    }
 
     /**
      * 连接 OneBot Websocket
@@ -43,17 +46,11 @@ public class OneBotWebsocketService {
     @Order(-10000)
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReadyEvent() {
-        for (OneBotSender sender : senders.values()) {
-            connect(sender);
+        for (OneBotSender sender : properties.getSenders()) {
+            if (sender.isWebsocket()) {
+                connect(sender);
+            }
         }
-    }
-
-    /**
-     * 注册 OneBot HTTP 推送平台
-     * @param sender OneBot HTTP 推送平台
-     */
-    public void register(OneBotSender sender) {
-        senders.put(sender.getName(), sender);
     }
 
     /**

@@ -1,10 +1,9 @@
 package com.starlwr.bot.adapter.onebot.config;
 
 import com.starlwr.bot.core.plugin.StarBotComponent;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.RejectedExecutionHandler;
@@ -14,11 +13,14 @@ import java.util.concurrent.ThreadPoolExecutor;
  * StarBotOneBotAdapterPlugin 线程池配置类
  */
 @Slf4j
-@Configuration
 @StarBotComponent
 public class OneBotThreadPoolConfig {
-    @Resource
-    private OneBotAdapterPluginProperties properties;
+    private final OneBotAdapterPluginProperties properties;
+
+    @Autowired
+    public OneBotThreadPoolConfig(OneBotAdapterPluginProperties properties) {
+        this.properties = properties;
+    }
 
     @Bean
     public ThreadPoolTaskExecutor oneBotThreadPool() {
