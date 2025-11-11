@@ -5,6 +5,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.starlwr.bot.adapter.onebot.config.OneBotAdapterPluginProperties;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
+import com.starlwr.bot.core.util.StringUtil;
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.WebSocketContainer;
 import lombok.NonNull;
@@ -48,6 +49,11 @@ public class OneBotWebsocketService {
     public void onApplicationReadyEvent() {
         for (OneBotSender sender : properties.getSenders()) {
             if (sender.isWebsocket()) {
+                if (StringUtil.isBlank(sender.getOneBotWebsocketToken())) {
+                    log.error("推送平台 {} 未配置 OneBot Websocket Token, 请完善配置", sender.getName());
+                    continue;
+                }
+
                 connect(sender);
             }
         }

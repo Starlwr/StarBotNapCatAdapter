@@ -8,6 +8,7 @@ import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.model.Sender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import com.starlwr.bot.core.service.StarBotSenderService;
+import com.starlwr.bot.core.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -62,6 +63,11 @@ public class OneBotController {
         }
 
         for (OneBotSender sender : properties.getSenders()) {
+            if (StringUtil.isBlank(sender.getOneBotHttpToken())) {
+                log.error("推送平台 {} 未配置 OneBot HTTP Token, 请完善配置", sender.getName());
+                continue;
+            }
+
             try {
                 RequestMappingInfo info = RequestMappingInfo
                         .paths(properties.getBaseUrl() + sender.getApi())
