@@ -44,7 +44,7 @@ public class OneBotHttpAdapterProxy implements InvocationHandler {
                 JSONObject params = (JSONObject) args[1];
 
                 Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer " + sender.getOneBotToken());
+                headers.put("Authorization", "Bearer " + sender.getOneBotHttpToken());
                 String apiBaseUrl = "http://" + sender.getOneBotAddress() + ":" + sender.getOneBotHttpPort();
 
                 log.debug("OneBotApi <- : {} {}", api.url(), StringUtil.getOmitString(params.toJSONString(), sender.getDebugLogMaxLength()));

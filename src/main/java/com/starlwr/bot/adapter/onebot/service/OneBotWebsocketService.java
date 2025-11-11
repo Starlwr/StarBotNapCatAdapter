@@ -70,7 +70,7 @@ public class OneBotWebsocketService {
                     String url = String.format("ws://%s:%d", sender.getOneBotAddress(), sender.getOneBotWebsocketPort());
 
                     WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
-                    headers.add("Authorization", "Bearer " + sender.getOneBotToken());
+                    headers.add("Authorization", "Bearer " + sender.getOneBotWebsocketToken());
 
                     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
                     container.setDefaultMaxTextMessageBufferSize(8 * 1024 * 1024);

@@ -40,9 +40,14 @@ public class OneBotSender {
     private int oneBotWebsocketPort;
 
     /**
-     * OneBot Token
+     * OneBot HTTP Token
      */
-    private String oneBotToken = "";
+    private String oneBotHttpToken;
+
+    /**
+     * OneBot Websocket Token
+     */
+    private String oneBotWebsocketToken;
 
     /**
      * 消息发送间隔时间，单位：毫秒
