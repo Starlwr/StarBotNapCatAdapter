@@ -128,6 +128,8 @@ public class OneBotWebsocketService {
 
         private boolean connectTimeout = false;
 
+        private Boolean tokenVerify = null;
+
         private OneBotWebSocketHandler(OneBotWebsocketService service, OneBotSender sender) {
             this.service = service;
             this.sender = sender;
@@ -193,6 +195,16 @@ public class OneBotWebsocketService {
                         executor.submit(() -> {
                             try {
                                 JSONObject rawMessage = JSON.parseObject(fullMessage);
+                                if (tokenVerify == null) {
+                                    if ("1403".equals(rawMessage.getString("retcode"))) {
+                                        tokenVerify = false;
+                                        log.error("{} 的 OneBot Websocket Token 配置不正确, 将无法处理消息, 请检查 Token 配置", sender.getName());
+                                    }
+                                    if ("meta_event".equals(rawMessage.getString("post_type")) && "lifecycle".equals(rawMessage.getString("meta_event_type")) && "connect".equals(rawMessage.getString("sub_type"))) {
+                                        tokenVerify = true;
+                                        log.info("{} 的 OneBot Websocket Token 认证成功", sender.getName());
+                                    }
+                                }
                                 if ("status".equalsIgnoreCase(rawMessage.getString("raw_message"))) {
                                     JSONObject operation = new JSONObject();
                                     operation.put("reply", "Running on StarBot v3.0.0");
@@ -247,6 +259,10 @@ public class OneBotWebsocketService {
         @Override
         public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus closeStatus) {
             if (connectTimeout) {
+                return;
+            }
+
+            if (Boolean.FALSE.equals(tokenVerify)) {
                 return;
             }
 
