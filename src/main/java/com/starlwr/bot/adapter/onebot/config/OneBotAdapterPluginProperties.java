@@ -34,6 +34,9 @@ public class OneBotAdapterPluginProperties {
     @Getter
     private WebsocketThread websocketThread = new WebsocketThread();
 
+    @Getter
+    private Detect detect = new Detect();
+
     /**
      * 线程相关
      */
@@ -59,5 +62,27 @@ public class OneBotAdapterPluginProperties {
          * 非核心线程存活时间，单位：秒
          */
         private int keepAliveSeconds = 300;
+    }
+
+    /**
+     * 检测相关
+     */
+    @Getter
+    @Setter
+    public static class Detect {
+        /**
+         * 是否启用 Websocket 消息接收检测
+         */
+        private boolean enableWebsocketDetect = false;
+
+        /**
+         * 指定时间内未从 Websocket 接收到消息时发送告警邮件，单位: 秒
+         */
+        private int websocketDetectInterval = 1800;
+
+        /**
+         * Websocket 告警邮件发送最短间隔时间，用于防止短时间内发送大量告警邮件，单位: 秒
+         */
+        private int websocketAlarmMailInterval = 3600;
     }
 }
