@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,14 +48,14 @@ public class OneBotHttpService {
             OneBotSender sender = senders.get(senderName);
 
             log.info("开始检测 {} 的 OneBot HTTP 服务可用性", senderName);
-            log.info("OneBot HTTP 连接地址: http://{}:{}", sender.getOneBotAddress(), sender.getOneBotHttpPort());
+            log.info("{} 的 OneBot HTTP 连接地址: http://{}:{}", senderName, sender.getOneBotAddress(), sender.getOneBotHttpPort());
             try {
                 JSONObject versionInfo = http.getVersionInfo(sender, new JSONObject());
-                log.info("OneBot HTTP 连接正常, 版本 v{}", versionInfo.getString("app_version"));
-            } catch (WebClientResponseException.Forbidden e) {
-                log.error("OneBot HTTP Token 配置不正确, 请检查", e);
+                log.info("{} 的 OneBot HTTP 连接正常, 版本 v{}", senderName, versionInfo.getString("app_version"));
+            } catch (HttpClientErrorException.Forbidden e) {
+                log.error("{} 的 OneBot HTTP Token 配置不正确, 将无法推送消息, 请检查 Token 配置", senderName, e);
             } catch (Exception e) {
-                log.error("OneBot HTTP 服务不可用, 请检查配置和服务状态", e);
+                log.error("{} 的 OneBot HTTP 服务不可用, 请检查配置和服务状态", senderName, e);
             }
         }
     }

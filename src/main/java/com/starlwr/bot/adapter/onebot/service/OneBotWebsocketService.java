@@ -69,7 +69,7 @@ public class OneBotWebsocketService {
             int retryInterval = 1;
             while (true) {
                 log.info("准备连接 {} 的 OneBot Websocket 服务", sender.getName());
-                log.info("OneBot Websocket 连接地址: ws://{}:{}/", sender.getOneBotAddress(), sender.getOneBotWebsocketPort());
+                log.info("{} 的 OneBot Websocket 连接地址: ws://{}:{}/", sender.getName(), sender.getOneBotAddress(), sender.getOneBotWebsocketPort());
 
                 CompletableFuture<WebSocketSession> sessionFuture = null;
                 try {
