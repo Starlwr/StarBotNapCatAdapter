@@ -36,9 +36,9 @@ import java.util.concurrent.*;
 @Slf4j
 @StarBotComponent
 public class OneBotWebsocketService {
-    private final ThreadPoolTaskExecutor executor;
-
     private final TaskScheduler taskScheduler;
+
+    private final ThreadPoolTaskExecutor executor;
 
     private final OneBotAdapterPluginProperties properties;
 
@@ -49,9 +49,9 @@ public class OneBotWebsocketService {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
 
     @Autowired
-    public OneBotWebsocketService(@Qualifier("oneBotThreadPool") ThreadPoolTaskExecutor executor, TaskScheduler taskScheduler, OneBotAdapterPluginProperties properties, StarBotMailService mailService) {
-        this.executor = executor;
+    public OneBotWebsocketService(TaskScheduler taskScheduler, @Qualifier("oneBotThreadPool") ThreadPoolTaskExecutor executor, OneBotAdapterPluginProperties properties, StarBotMailService mailService) {
         this.taskScheduler = taskScheduler;
+        this.executor = executor;
         this.properties = properties;
         this.mailService = mailService;
     }
@@ -129,6 +129,7 @@ public class OneBotWebsocketService {
 
     /**
      * Websocket 消息接收检测
+     * @param handler WebSocket 处理器
      */
     private void startDetect(OneBotWebSocketHandler handler) {
         String platformName = handler.sender.getName();

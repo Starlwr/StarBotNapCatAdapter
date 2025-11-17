@@ -2,6 +2,7 @@ package com.starlwr.bot.adapter.onebot.service;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.starlwr.bot.adapter.onebot.config.OneBotAdapterPluginProperties;
 import com.starlwr.bot.adapter.onebot.converter.OneBotMessageConverter;
 import com.starlwr.bot.adapter.onebot.enums.ResultCode;
 import com.starlwr.bot.adapter.onebot.exception.OneBotApiException;
@@ -10,15 +11,23 @@ import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.enums.PushTargetType;
 import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.plugin.StarBotComponent;
+import com.starlwr.bot.core.service.StarBotMailService;
+import com.starlwr.bot.core.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * OneBot HTTP 服务
@@ -26,6 +35,14 @@ import java.util.Map;
 @Slf4j
 @StarBotComponent
 public class OneBotHttpService {
+    private final TaskScheduler taskScheduler;
+
+    private final ThreadPoolTaskExecutor executor;
+
+    private final OneBotAdapterPluginProperties properties;
+
+    private final StarBotMailService mailService;
+
     private final OneBotHttpAdapter http;
 
     private final OneBotMessageConverter converter;
@@ -33,7 +50,11 @@ public class OneBotHttpService {
     private final Map<String, OneBotSender> senders = new HashMap<>();
 
     @Autowired
-    public OneBotHttpService(OneBotHttpAdapter http, OneBotMessageConverter converter) {
+    public OneBotHttpService(TaskScheduler taskScheduler, @Qualifier("oneBotThreadPool") ThreadPoolTaskExecutor executor, OneBotAdapterPluginProperties properties, StarBotMailService mailService, OneBotHttpAdapter http, OneBotMessageConverter converter) {
+        this.taskScheduler = taskScheduler;
+        this.executor = executor;
+        this.properties = properties;
+        this.mailService = mailService;
         this.http = http;
         this.converter = converter;
     }
@@ -52,6 +73,12 @@ public class OneBotHttpService {
             try {
                 JSONObject versionInfo = http.getVersionInfo(sender, new JSONObject());
                 log.info("{} 的 OneBot HTTP 连接正常, 版本 v{}", senderName, versionInfo.getString("app_version"));
+                JSONObject loginInfo = http.getLoginInfo(sender, new JSONObject());
+                log.info("{} 当前登录账号: {}({})", senderName, loginInfo.getString("nickname"), loginInfo.getLong("user_id"));
+
+                if (properties.getDetect().isEnableHttpDetect()) {
+                    startDetect(sender);
+                }
             } catch (HttpClientErrorException.Forbidden e) {
                 log.error("{} 的 OneBot HTTP Token 配置不正确, 将无法推送消息, 请检查 Token 配置", senderName, e);
             } catch (Exception e) {
@@ -103,5 +130,45 @@ public class OneBotHttpService {
             log.error("OneBot HTTP 发送消息异常", e);
             return new JSONObject().fluentPut("code", ResultCode.UNKNOWN.getCode()).fluentPut("message", "OneBot HTTP 发送消息异常, 请检查插件日志错误信息");
         }
+    }
+
+    /**
+     * HTTP 服务可用性检测
+     * @param sender OneBot 推送平台信息
+     */
+    private void startDetect(OneBotSender sender) {
+        int detectInterval = properties.getDetect().getHttpDetectInterval();
+        int alarmInterval = properties.getDetect().getHttpAlarmMailInterval();
+
+        AtomicReference<Instant> lastAlarmTime = new AtomicReference<>();
+
+        taskScheduler.scheduleAtFixedRate(() -> executor.submit(() -> {
+            String alarm = "";
+            try {
+                JSONObject status = http.getStatus(sender, new JSONObject());
+                if (!Boolean.TRUE.equals(status.getBoolean("good"))) {
+                    alarm = sender.getName() + " 的 OneBot 服务状态异常, 请检查服务状态";
+                }
+
+                if (!Boolean.TRUE.equals(status.getBoolean("online"))) {
+                    alarm = sender.getName() + " 的 OneBot 服务登录状态异常, 请检查账号是否已掉线";
+                }
+            } catch (Exception e) {
+                alarm = sender.getName() + " 的 OneBot HTTP 服务不可用, 请检查服务状态";
+            }
+
+            if (StringUtil.isBlank(alarm)) {
+                return;
+            }
+
+            log.warn(alarm);
+
+            if (lastAlarmTime.get() != null && Instant.now().minusSeconds(alarmInterval).isBefore(lastAlarmTime.get())) {
+                return;
+            }
+
+            mailService.sendMail("StarBot OneBot 服务异常告警", alarm);
+            lastAlarmTime.set(Instant.now());
+        }), Instant.now().plusSeconds(detectInterval), Duration.ofSeconds(detectInterval));
     }
 }
