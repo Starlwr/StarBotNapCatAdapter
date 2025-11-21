@@ -17,6 +17,14 @@
     <description>OneBot Adapter Plugin For StarBot</description>
     <url>https://bot.starlwr.com</url>
 
+    <developers>
+        <developer>
+            <id>StarBotOfficial</id>
+            <name>StarBotOfficial</name>
+            <email>lwr1104@qq.com</email>
+        </developer>
+    </developers>
+
     <licenses>
         <license>
             <name>GNU Affero General Public License v3.0</name>
@@ -24,14 +32,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <developers>
-        <developer>
-            <id>LWR</id>
-            <name>LWR</name>
-            <email>lwr1104@qq.com</email>
-        </developer>
-    </developers>
 
     <properties>
         <java.version>17</java.version>
@@ -82,6 +82,7 @@
                 <executions>
                     <execution>
                         <goals>
+                            <goal>plugin-info-process</goal>
                             <goal>dependency-process</goal>
                         </goals>
                     </execution>
@@ -101,9 +102,6 @@
                             <resources>
                                 <resource>
                                     <directory>${project.build.directory}</directory>
-                                    <includes>
-                                        <include>dependency.json</include>
-                                    </includes>
                                 </resource>
                             </resources>
                         </configuration>
