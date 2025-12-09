@@ -7,9 +7,9 @@ import com.starlwr.bot.adapter.onebot.converter.OneBotMessageConverter;
 import com.starlwr.bot.adapter.onebot.enums.ResultCode;
 import com.starlwr.bot.adapter.onebot.exception.OneBotApiException;
 import com.starlwr.bot.adapter.onebot.http.OneBotHttpAdapter;
+import com.starlwr.bot.adapter.onebot.dto.MessageDTO;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.core.enums.PushTargetType;
-import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import com.starlwr.bot.core.service.StarBotMailService;
 import com.starlwr.bot.core.util.StringUtil;
@@ -100,7 +100,7 @@ public class OneBotHttpService {
      *
      * @param message 消息
      */
-    public JSONObject send(Message message) {
+    public JSONObject send(MessageDTO message) {
         OneBotSender sender = senders.get(message.getPlatform());
 
         try {
@@ -108,27 +108,28 @@ public class OneBotHttpService {
 
             JSONArray elements = converter.convert(message.getContent());
             if (elements.isEmpty()) {
-                return new JSONObject().fluentPut("code", ResultCode.EMPTY_MESSAGE.getCode()).fluentPut("message", ResultCode.EMPTY_MESSAGE.getMsg());
+                return new JSONObject().fluentPut("code", ResultCode.EMPTY_MESSAGE.getCode()).fluentPut("message", ResultCode.EMPTY_MESSAGE.getMsg()).fluentPut("id", null);
             }
 
             params.put("message", elements);
 
+            JSONObject result;
             if (message.getType() == PushTargetType.FRIEND) {
                 params.put("user_id", String.valueOf(message.getNum()));
-                http.sendPrivateMsg(sender, params);
+                result = http.sendPrivateMsg(sender, params);
             } else if (message.getType() == PushTargetType.GROUP) {
                 params.put("group_id", String.valueOf(message.getNum()));
-                http.sendGroupMsg(sender, params);
+                result = http.sendGroupMsg(sender, params);
             } else {
-                return new JSONObject().fluentPut("code", ResultCode.UNKNOWN_TARGET_TYPE.getCode()).fluentPut("message", ResultCode.UNKNOWN_TARGET_TYPE.getMsg());
+                return new JSONObject().fluentPut("code", ResultCode.UNKNOWN_TARGET_TYPE.getCode()).fluentPut("message", ResultCode.UNKNOWN_TARGET_TYPE.getMsg()).fluentPut("id", null);
             }
 
-            return new JSONObject().fluentPut("code", ResultCode.SUCCESS.getCode()).fluentPut("message", ResultCode.SUCCESS.getMsg());
+            return new JSONObject().fluentPut("code", ResultCode.SUCCESS.getCode()).fluentPut("message", ResultCode.SUCCESS.getMsg()).fluentPut("id", result.getString("message_id"));
         } catch (OneBotApiException e) {
-            return new JSONObject().fluentPut("code", ResultCode.API_ERROR.getCode()).fluentPut("message", ResultCode.API_ERROR.getMsg() + ": " + e.getMsg());
+            return new JSONObject().fluentPut("code", ResultCode.API_ERROR.getCode()).fluentPut("message", ResultCode.API_ERROR.getMsg() + ": " + e.getMsg()).fluentPut("id", null);
         } catch (Exception e) {
             log.error("OneBot HTTP 发送消息异常", e);
-            return new JSONObject().fluentPut("code", ResultCode.UNKNOWN.getCode()).fluentPut("message", "OneBot HTTP 发送消息异常, 请检查插件日志错误信息");
+            return new JSONObject().fluentPut("code", ResultCode.UNKNOWN.getCode()).fluentPut("message", "OneBot HTTP 发送消息异常, 请检查插件日志错误信息").fluentPut("id", null);
         }
     }
 

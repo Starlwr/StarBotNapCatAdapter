@@ -2,9 +2,9 @@ package com.starlwr.bot.adapter.onebot.controller;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.starlwr.bot.adapter.onebot.config.OneBotAdapterPluginProperties;
+import com.starlwr.bot.adapter.onebot.dto.MessageDTO;
 import com.starlwr.bot.adapter.onebot.model.OneBotSender;
 import com.starlwr.bot.adapter.onebot.service.OneBotHttpService;
-import com.starlwr.bot.core.model.Message;
 import com.starlwr.bot.core.model.Sender;
 import com.starlwr.bot.core.plugin.StarBotComponent;
 import com.starlwr.bot.core.service.StarBotSenderService;
@@ -57,7 +57,7 @@ public class OneBotController {
     public void onApplicationReadyEvent() {
         Method method;
         try {
-            method = getClass().getMethod("send", Message.class);
+            method = getClass().getMethod("send", MessageDTO.class);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException("注册推送 API 异常", e);
         }
@@ -89,7 +89,7 @@ public class OneBotController {
      * @param message 消息
      * @return 调用结果
      */
-    public JSONObject send(@RequestBody Message message) {
+    public JSONObject send(@RequestBody MessageDTO message) {
         return httpService.send(message);
     }
 }
