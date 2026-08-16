@@ -40,10 +40,6 @@ import java.util.Optional;
 @RestController
 @StarBotComponent
 public class OneBotController {
-    private static final String BEARER_PREFIX = "Bearer ";
-
-    private static final int MIN_TOKEN_SCORE = 3;
-
     private final WebServerApplicationContext webContext;
 
     private final RequestMappingHandlerMapping mapping;
@@ -163,7 +159,7 @@ public class OneBotController {
      */
     private void warnIfWeakToken(String senderName, String token) {
         Strength strength = ZXCVBN.measure(token);
-        if (strength.getScore() < MIN_TOKEN_SCORE) {
+        if (strength.getScore() < 3) {
             log.warn("推送平台 {} 配置的推送接口 Token 强度过低, 若当前部署在公网环境中, 建议修改", senderName);
         }
     }
@@ -174,14 +170,16 @@ public class OneBotController {
      * @return Token，不存在时返回 null
      */
     private String extractBearerToken(HttpServletRequest request) {
+        String prefix = "Bearer ";
+
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization == null || authorization.isBlank()) {
             return null;
         }
 
         String value = authorization.strip();
-        if (value.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
-            return value.substring(BEARER_PREFIX.length()).strip();
+        if (value.regionMatches(true, 0, prefix, 0, prefix.length())) {
+            return value.substring(prefix.length()).strip();
         }
 
         return value;

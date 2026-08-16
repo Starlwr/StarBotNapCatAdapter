@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.TaskScheduler;
@@ -48,6 +49,8 @@ public class OneBotWebsocketService {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
 
+    private volatile boolean running = true;
+
     @Autowired
     public OneBotWebsocketService(TaskScheduler taskScheduler, @Qualifier("oneBotThreadPool") ThreadPoolTaskExecutor executor, OneBotAdapterPluginProperties properties, StarBotMailService mailService) {
         this.taskScheduler = taskScheduler;
@@ -81,6 +84,15 @@ public class OneBotWebsocketService {
     }
 
     /**
+     * 应用关闭时停止重连，并立即中断正在等待的重连线程
+     */
+    @EventListener(ContextClosedEvent.class)
+    public void onContextClosed() {
+        running = false;
+        executor.getThreadPoolExecutor().shutdownNow();
+    }
+
+    /**
      * 连接到 OneBot Websocket 服务
      * @param sender OneBot 推送平台信息
      */
@@ -88,7 +100,7 @@ public class OneBotWebsocketService {
         executor.submit(() -> {
             int retryCount = 0;
             int retryInterval = 1;
-            while (true) {
+            while (running) {
                 log.info("准备连接 {} 的 OneBot Websocket 服务", sender.getName());
                 log.info("{} 的 OneBot Websocket 连接地址: ws://{}:{}/", sender.getName(), sender.getOneBotAddress(), sender.getOneBotWebsocketPort());
 
@@ -127,6 +139,7 @@ public class OneBotWebsocketService {
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                         log.error("连接 {} 的 OneBot Websocket 中断", sender.getName(), ex);
+                        return;
                     }
                 }
             }
@@ -315,6 +328,7 @@ public class OneBotWebsocketService {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.error("重新连接 {} 的 Websocket 时中断", sender.getName(), e);
+                    return;
                 }
                 service.connect(sender);
             });
@@ -342,6 +356,7 @@ public class OneBotWebsocketService {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.error("重新连接 {} 的 Websocket 时中断", sender.getName(), e);
+                    return;
                 }
                 service.connect(sender);
             });
