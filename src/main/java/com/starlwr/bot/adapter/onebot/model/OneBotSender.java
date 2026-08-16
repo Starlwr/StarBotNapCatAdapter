@@ -20,6 +20,11 @@ public class OneBotSender {
     private String api;
 
     /**
+     * 推送接口 Token
+     */
+    private String token;
+
+    /**
      * 是否启用 Websocket
      */
     private boolean websocket;

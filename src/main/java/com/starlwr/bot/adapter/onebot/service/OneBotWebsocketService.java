@@ -63,14 +63,20 @@ public class OneBotWebsocketService {
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReadyEvent() {
         for (OneBotSender sender : properties.getSenders()) {
-            if (sender.isWebsocket()) {
-                if (StringUtil.isBlank(sender.getOneBotWebsocketToken())) {
-                    log.error("推送平台 {} 未配置 OneBot Websocket Token, 请完善配置", sender.getName());
-                    continue;
-                }
-
-                connect(sender);
+            if (!sender.isWebsocket()) {
+                continue;
             }
+
+            if (StringUtil.isBlank(sender.getToken())) {
+                continue;
+            }
+
+            if (StringUtil.isBlank(sender.getOneBotWebsocketToken())) {
+                log.error("推送平台 {} 未配置 OneBot Websocket Token, 请完善配置", sender.getName());
+                continue;
+            }
+
+            connect(sender);
         }
     }
 
